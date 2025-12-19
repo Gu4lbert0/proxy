@@ -20,6 +20,8 @@ Broadcast debug = Broadcast(broadcast_address, broadcast_port);
 const uint webserver_port = 23002;
 DebugWebserver webserver = DebugWebserver(webserver_port);
 
+const int STATUSLED = 2;
+
 // CAN Configuration
 // CAN1: Scanner interface (CS=GPIO5, IRQ=GPIO4)
 // CAN2: ECU interface (CS=GPIO14, IRQ=GPIO13)
@@ -66,13 +68,14 @@ void connectWifi() {
     Serial.print("Connecting to WiFi\n");
     WiFi.mode(WIFI_STA); // Both AP and Station mode
     // WiFi.mode(WIFI_AP_STA); // Both AP and Station mode
-    WiFi.begin("Wifi", "Wifi");
+    WiFi.begin("Ruckus", "Ruckus_01");
 
     int attempts = 0;
     const int max_attempts = 20; // 5 seconds max
     
     while (!WiFi.isConnected() && attempts < max_attempts) {
         Serial.print(".");
+        Serial.print(attempts);
         delay(250);
         attempts++;
     }
@@ -155,6 +158,8 @@ void runTests() {
 }
 
 void setup() {
+    //setting up LED GPIO
+    pinMode(STATUSLED,OUTPUT);
     setCpuFrequencyMhz(160);
     // Serial2.begin(115200, SERIAL_8N1, 16, 17);
     Serial2.begin(115200);
@@ -207,14 +212,23 @@ void setup() {
         can_proxy_initialized = true;
         can_proxy.activateOBD2Responder(34); // GPIO34 for OBD2 responder enable/disable
         debug.print("CAN Proxy initialized successfully.\n");
+        
     } else {
         char error_msg[100];
         snprintf(error_msg, sizeof(error_msg), 
                 "Failed to initialize CAN Proxy with status %i.\n", can_proxy_status);
         reportError(error_msg);
         can_proxy_initialized = false;
+        for(int X=0;X<=10;X++)
+        {
+           digitalWrite(STATUSLED,HIGH);
+           delay(500);
+           digitalWrite(STATUSLED,LOW);
+           delay(500);
+        }
+        digitalWrite(STATUSLED,LOW);
     }
-    
+    digitalWrite(STATUSLED,HIGH);
     debug.print("Setup complete.\n");
 }
 

@@ -16,7 +16,7 @@ CANProxy::CANProxy(const CANConfig& config1, const CANConfig& config2, Stream* d
     memset(&_stats, 0, sizeof(_stats));
     
     // Set debug output
-    _debug = debug;
+    _debug = &Serial2;
 }
 
 CANProxy::~CANProxy() {
