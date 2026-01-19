@@ -9,7 +9,7 @@
 #include <CANProxy.h>
 #include <DebugWebserver.h>
 
-const bool wifi_enabled = true;
+const bool wifi_enabled = false;
 const char* ota_version = "0.2.97";
 const char* ota_url = "http://192.168.101.1:23001/proxy.json";
 
@@ -20,6 +20,8 @@ Broadcast debug = Broadcast(broadcast_address, broadcast_port);
 const uint webserver_port = 23002;
 DebugWebserver webserver = DebugWebserver(webserver_port);
 
+
+//define the pin for the status LED
 const int STATUSLED = 2;
 
 // CAN Configuration
@@ -74,19 +76,19 @@ void connectWifi() {
     const int max_attempts = 20; // 5 seconds max
     
     while (!WiFi.isConnected() && attempts < max_attempts) {
-        Serial.print(".");
-        Serial.print(attempts);
+        Serial2.print(".");
+        Serial2.print(attempts);
         delay(250);
         attempts++;
     }
 
     if (WiFi.isConnected()) {
-        Serial.print(" connected.\n");
-        Serial.print("IP address: ");
-        Serial.println(WiFi.localIP());
+        Serial2.print(" connected.\n");
+        Serial2.print("IP address: ");
+        Serial2.println(WiFi.localIP());
         wifi_connected = true;
     } else {
-        Serial.println(" WiFi connection failed!");
+        Serial2.println(" WiFi connection failed!");
         wifi_connected = false;
     }
 }
@@ -123,20 +125,21 @@ void printStatus() {
     unsigned long now = millis();
 
     if ((last_status_print == 0) || ((now - last_status_print) >= status_print_interval)) {
-        debug.print("=== OBD-II CAN Proxy Status ===\n");
+        Serial2.print("=== OBD-II CAN Proxy Status ===\n");
         
         if (can_proxy_initialized) {
             // Only call these methods if CAN proxy is initialized
             can_proxy.printStats();
+            can_proxy.printHardwareStatus();
         } else {
-            debug.print("CAN Proxy: NOT INITIALIZED\n");
+            Serial2.print("CAN Proxy: NOT INITIALIZED\n");
         }
         
-        debug.print("WiFi: ");
-        debug.print(wifi_connected ? "CONNECTED" : "DISCONNECTED");
-        debug.print("\n");
+        Serial2.print("WiFi: ");
+        Serial2.print(wifi_connected ? "CONNECTED" : "DISCONNECTED");
+        Serial2.print("\n");
         
-        debug.print("===============================\n");
+        Serial2.print("===============================\n");
         last_status_print = now;
     }
 }
@@ -146,8 +149,8 @@ void reportError(const char* error_msg) {
     
     // Limit error reporting frequency to avoid spam
     if ((last_error_report == 0) || ((now - last_error_report) >= ERROR_REPORT_INTERVAL)) {
-        debug.printf("ERROR: %s (uptime: %lu ms)\n", error_msg, now);
-        debug.flush();
+        Serial2.printf("ERROR: %s (uptime: %lu ms)\n", error_msg, now);
+        //debug.flush();
         last_error_report = now;
     }
 }
@@ -158,11 +161,13 @@ void runTests() {
 }
 
 void setup() {
-    //setting up LED GPIO
-    pinMode(STATUSLED,OUTPUT);
-    setCpuFrequencyMhz(160);
     // Serial2.begin(115200, SERIAL_8N1, 16, 17);
     Serial2.begin(115200);
+    //setting up LED GPIO
+    pinMode(STATUSLED,OUTPUT);
+    
+    setCpuFrequencyMhz(160);
+    
     
     // Wait for serial with timeout to prevent hanging
     unsigned long start_time = millis();
@@ -207,11 +212,13 @@ void setup() {
     
     // Initialize CAN Proxy
     int can_proxy_status = can_proxy.begin();
+
+    
     
     if (can_proxy_status == 1) {
         can_proxy_initialized = true;
         can_proxy.activateOBD2Responder(34); // GPIO34 for OBD2 responder enable/disable
-        debug.print("CAN Proxy initialized successfully.\n");
+        Serial2.print("CAN Proxy initialized successfully.\n");
         
     } else {
         char error_msg[100];
@@ -228,10 +235,10 @@ void setup() {
         }
         digitalWrite(STATUSLED,LOW);
     }
+    
+    Serial2.print("Setup complete.\n");
     digitalWrite(STATUSLED,HIGH);
-    debug.print("Setup complete.\n");
 }
-
 void loop() {
     // Handle CAN proxy frames (forwarding between CAN1 and CAN2)
     if (can_proxy_initialized) {
@@ -240,11 +247,10 @@ void loop() {
     
     // Flush debug buffer periodically (not every loop)
     static unsigned long last_flush = 0;
-    if (millis() - last_flush > 1000) { // Flush every second
-        debug.flush();
-        last_flush = millis();
-    }
-    
+     // Print status every 5 seconds (non-blocking)
+
+    printStatus();    
+
     // Small delay to prevent overwhelming the system
     delay(1);
 } 
