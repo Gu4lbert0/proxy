@@ -179,7 +179,7 @@ void setup() {
     runTests();
     
     // Initialize broadcast first for error reporting
-    Serial2.print("Starting up OBD-II CAN Proxy...\n");
+    debug.print("Starting up OBD-II CAN Proxy...\n");
   
     if (wifi_enabled) {
         // Connect to WiFi
@@ -219,7 +219,7 @@ void setup() {
     if (can_proxy_status == 1) {
         can_proxy_initialized = true;
         can_proxy.activateOBD2Responder(34); // GPIO34 for OBD2 responder enable/disable
-        Serial2.print("CAN Proxy initialized successfully.\n");
+        debug.print("CAN Proxy initialized successfully.\n");
         
     } else {
         char error_msg[100];
@@ -237,7 +237,7 @@ void setup() {
         digitalWrite(STATUSLED,LOW);
     }
     
-    Serial2.print("Setup complete.\n");
+    debug.print("Setup complete.\n");
     debug.flush();
     digitalWrite(STATUSLED,HIGH);
 }

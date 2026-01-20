@@ -54,7 +54,7 @@ int CANProxy::begin() {
     if (_debug) {
         _debug->println("CANProxy: Both CAN controllers initialized successfully");
     }
-    
+    _debug->flush();
     return 1; // Both CAN controllers initialized successfully
 }
 
@@ -100,6 +100,7 @@ void CANProxy::activateOBD2Responder(int gpio_pin) {
     if (_debug) {
         _debug->printf("CANProxy: OBD2Responder activated with GPIO pin %d\n", gpio_pin);
     }
+    _debug->flush();
 }
 
 void CANProxy::handleOBD2ResponderGPIOEnable() {
@@ -177,6 +178,7 @@ void CANProxy::handleFrames() {
                 }
             }
         }
+        _debug->flush();
     }
 }
 
