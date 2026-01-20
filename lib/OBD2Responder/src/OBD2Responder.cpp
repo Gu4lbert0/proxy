@@ -10,7 +10,7 @@ OBD2Responder::OBD2Responder(
     CANStream& can_stream,
     Stream* debug
 ) {
-    _debug = debug;
+    _debug = &Serial2; //debug;
     _can_stream = &can_stream;
 }
 

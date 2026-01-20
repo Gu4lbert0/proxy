@@ -16,7 +16,7 @@ CANProxy::CANProxy(const CANConfig& config1, const CANConfig& config2, Stream* d
     memset(&_stats, 0, sizeof(_stats));
     
     // Set debug output
-    _debug = debug;
+    _debug = &Serial2;
 }
 
 CANProxy::~CANProxy() {
@@ -116,6 +116,8 @@ void CANProxy::handleOBD2ResponderGPIOEnable() {
 
 void CANProxy::handleFrames() {
     // Process frames from CAN1 buffer and forward to CAN2
+    //_debug->println("Handeling frames");
+    _debug->println(_can1.available());
     if (_can1.available()) {
         // If OBD2Responder has been activated, let it process the frame first
         if (_obd2_responder && _obd2_responder_gpio_enabled) {
@@ -133,11 +135,14 @@ void CANProxy::handleFrames() {
         }
 
         // OBD2Responder didn't handle this frame, so forward it
+        _debug->println("Reading can Frame");
         CANFrame can_frame = _can1.read();
         _stats.frames_received_can1++;
         
         // Forward frame to CAN2
         int result = _can2.sendFrame(can_frame);
+        _debug->print("Results for sending can_frame to CAN2: ");
+        _debug->println(result);
         if (result == 1) {
             _stats.frames_forwarded_can1_to_can2++;
             if (_debug) {
@@ -157,6 +162,8 @@ void CANProxy::handleFrames() {
         while (!_can2.available() && millis() - tx_time < 50) { }
         
         // If we got a response, forward it
+        _debug->print("Can 2 availability status: ");
+        _debug->println(_can2.available());
         if (_can2.available()) {
             // Process frames from CAN2 buffer and forward to CAN1
             CANFrame can_frame_2 = _can2.read();

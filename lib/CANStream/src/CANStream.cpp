@@ -22,7 +22,7 @@ CANStream::CANStream(const CANConfig& config, Stream* debug) : _config(config), 
     }
 
     // Set debug output
-    _debug = debug;
+    _debug = &Serial2; //debug;
 }
 
 int CANStream::begin() {
@@ -57,7 +57,6 @@ int CANStream::begin() {
         }
         _state.error_count++;
     }
-    
     return result;
 }
 
@@ -92,6 +91,7 @@ CANFrame CANStream::read() {
     delayMicroseconds(_state.delay_after_receive); // Wait for ACK, EOF, and IFS to fully elapse
     
     if (!available()) {
+        _debug->println("Returned Empty Frames");
         // Return empty frame if no data available
         CANFrame empty_frame = {0, false, false, false, 0, {0}, 0};
         return empty_frame;
@@ -100,10 +100,12 @@ CANFrame CANStream::read() {
     // Get the oldest frame from the ring buffer (FIFO order)
     CANFrame frame = _state.frame_buffer[_state.buffer_tail];
     
+    
     // Advance the tail pointer
     _state.buffer_tail = (_state.buffer_tail + 1) % _state.frame_buffer_size;
     _state.frames_buffered--;
     
+    _debug->flush();
     return frame;
 }
 
