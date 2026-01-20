@@ -9,11 +9,11 @@
 #include <CANProxy.h>
 #include <DebugWebserver.h>
 
-const bool wifi_enabled = false;
+const bool wifi_enabled = true;
 const char* ota_version = "0.2.97";
 const char* ota_url = "http://192.168.101.1:23001/proxy.json";
 
-const char* broadcast_address = "192.168.101.255";
+const char* broadcast_address = "10.78.48.255";
 const uint broadcast_port = 23000;
 Broadcast debug = Broadcast(broadcast_address, broadcast_port);
 
@@ -125,21 +125,22 @@ void printStatus() {
     unsigned long now = millis();
 
     if ((last_status_print == 0) || ((now - last_status_print) >= status_print_interval)) {
-        Serial2.print("=== OBD-II CAN Proxy Status ===\n");
+        debug.print("=== OBD-II CAN Proxy Status ===\n");
         
         if (can_proxy_initialized) {
             // Only call these methods if CAN proxy is initialized
             can_proxy.printStats();
             can_proxy.printHardwareStatus();
         } else {
-            Serial2.print("CAN Proxy: NOT INITIALIZED\n");
+            debug.print("CAN Proxy: NOT INITIALIZED\n");
         }
         
-        Serial2.print("WiFi: ");
-        Serial2.print(wifi_connected ? "CONNECTED" : "DISCONNECTED");
-        Serial2.print("\n");
+        debug.print("WiFi: ");
+        debug.print(wifi_connected ? "CONNECTED" : "DISCONNECTED");
+        debug.print("\n");
         
-        Serial2.print("===============================\n");
+        debug.print("===============================\n");
+        debug.flush();
         last_status_print = now;
     }
 }
@@ -237,6 +238,7 @@ void setup() {
     }
     
     Serial2.print("Setup complete.\n");
+    debug.flush();
     digitalWrite(STATUSLED,HIGH);
 }
 void loop() {
