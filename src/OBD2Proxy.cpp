@@ -59,7 +59,7 @@ CANConfig can2_config = {
 
 // CAN Proxy - using Broadcast as Stream* for debug output
 CANProxy can_proxy = CANProxy(can1_config, can2_config, &debug);
-
+CANStream can_stream1 = CANStream(can1_config, &debug);
 // System state flags
 bool can_proxy_initialized = false;
 bool wifi_connected = false;
@@ -129,8 +129,9 @@ void printStatus() {
         
         if (can_proxy_initialized) {
             // Only call these methods if CAN proxy is initialized
-            can_proxy.printStats();
-            can_proxy.printHardwareStatus();
+            //can_proxy.printStats();
+            //can_proxy.printHardwareStatus();
+            can_stream1.printStats();
         } else {
             debug.print("CAN Proxy: NOT INITIALIZED\n");
         }
@@ -249,9 +250,13 @@ void loop() {
     
     // Flush debug buffer periodically (not every loop)
     static unsigned long last_flush = 0;
-     // Print status every 5 seconds (non-blocking)
+    if (millis() - last_flush > 1000) { // Flush every second
+        debug.flush();
+        last_flush = millis();
+    }
 
-    printStatus();    
+    // print information here. 
+    printStatus();
 
     // Small delay to prevent overwhelming the system
     delay(1);
