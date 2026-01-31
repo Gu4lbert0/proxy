@@ -117,7 +117,7 @@ void CANProxy::handleOBD2ResponderGPIOEnable() {
 void CANProxy::handleFrames() {
     // Process frames from CAN1 buffer and forward to CAN2
     //_debug->println("Handeling frames");
-    _debug->println(_can1.available());
+    //_debug->println(_can1.available());
     if (_can1.available()) {
         // If OBD2Responder has been activated, let it process the frame first
         if (_obd2_responder && _obd2_responder_gpio_enabled) {

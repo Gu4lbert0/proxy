@@ -60,6 +60,9 @@ CANConfig can2_config = {
 // CAN Proxy - using Broadcast as Stream* for debug output
 CANProxy can_proxy = CANProxy(can1_config, can2_config, &debug);
 CANStream can_stream1 = CANStream(can1_config, &debug);
+CANStream can_stream2 = CANStream(can2_config, &debug);
+
+
 // System state flags
 bool can_proxy_initialized = false;
 bool wifi_connected = false;
@@ -119,29 +122,30 @@ void checkForOtaUpdate() {
 }
 
 unsigned long last_status_print = 0;
-unsigned long status_print_interval = 10000; // 10 seconds
+unsigned long status_print_interval = 5000; // 10 seconds
 
 void printStatus() {
     unsigned long now = millis();
 
     if ((last_status_print == 0) || ((now - last_status_print) >= status_print_interval)) {
-        debug.print("=== OBD-II CAN Proxy Status ===\n");
+        Serial2.print("=== OBD-II CAN Proxy Status ===\n");
         
         if (can_proxy_initialized) {
             // Only call these methods if CAN proxy is initialized
             //can_proxy.printStats();
             //can_proxy.printHardwareStatus();
             can_stream1.printStats();
+            can_stream2.printStats();
         } else {
-            debug.print("CAN Proxy: NOT INITIALIZED\n");
+            Serial2.print("CAN Proxy: NOT INITIALIZED\n");
         }
         
-        debug.print("WiFi: ");
-        debug.print(wifi_connected ? "CONNECTED" : "DISCONNECTED");
-        debug.print("\n");
+        Serial2.print("WiFi: ");
+        Serial2.print(wifi_connected ? "CONNECTED" : "DISCONNECTED");
+        Serial2.print("\n");
         
-        debug.print("===============================\n");
-        debug.flush();
+        Serial2.print("===============================\n");
+        Serial2.flush();
         last_status_print = now;
     }
 }
@@ -180,7 +184,7 @@ void setup() {
     runTests();
     
     // Initialize broadcast first for error reporting
-    debug.print("Starting up OBD-II CAN Proxy...\n");
+    Serial2.print("Starting up OBD-II CAN Proxy...\n");
   
     if (wifi_enabled) {
         // Connect to WiFi
@@ -196,12 +200,12 @@ void setup() {
         checkForOtaUpdate();
 
         if (wifi_connected) {
-            debug.print("\nStarting up OBD-II CAN Proxy...\n");
+            Serial2.print("\nStarting up OBD-II CAN Proxy...\n");
             if (!webserver.start()) {
-                debug.println("Failed to start webserver");
+                Serial2.println("Failed to start webserver");
             } else {
-                debug.print("Webserver started on port ");
-                debug.println(webserver_port);
+                Serial2.print("Webserver started on port ");
+                Serial2.println(webserver_port);
                 webserver.println("Hello");
                 webserver.flush();
             }
@@ -220,7 +224,7 @@ void setup() {
     if (can_proxy_status == 1) {
         can_proxy_initialized = true;
         can_proxy.activateOBD2Responder(34); // GPIO34 for OBD2 responder enable/disable
-        debug.print("CAN Proxy initialized successfully.\n");
+        Serial2.print("CAN Proxy initialized successfully.\n");
         
     } else {
         char error_msg[100];
@@ -238,7 +242,7 @@ void setup() {
         digitalWrite(STATUSLED,LOW);
     }
     
-    debug.print("Setup complete.\n");
+    Serial2.print("Setup complete.\n");
     debug.flush();
     digitalWrite(STATUSLED,HIGH);
 }
